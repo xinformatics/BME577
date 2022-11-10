@@ -59,9 +59,8 @@ app_ui = ui.page_fluid(
             ui.p(ui.input_select("shaps", "Select SHAP method", shap_choices)),
             ui.input_action_button("run_tshap", "Run Temporal SHAP", class_="btn-success btn-lg"),
 
-
             ui.p(ui.input_select("feats", "Select feature to analyze", feature_choices)),
-            ui.input_action_button("show_tshap", "Show T-Shap Results", class_="btn-success btn-lg"),
+            ui.input_action_button("show_tshap", "Show Temporal Shap Results", class_="btn-success btn-lg"),
 
             ui.p(ui.input_text("feedback", "Please provide feedback in the box below")),
             #ui.p(ui.input_radio_buttons("feedback", "Choose your feedback type", feedback_choices)),
@@ -72,8 +71,9 @@ app_ui = ui.page_fluid(
         ui.panel_main(
         ui.panel_title("Outputs"),
         ui.p(ui.output_text_verbatim("res_text")),
-        #ui.output_plot("plot_model"),
-        #ui.output_plot("plot_shap"),
+        ui.output_plot("plot_model"),
+        ui.p(ui.output_text_verbatim("shaprun_text")),
+        ui.output_plot("plot_shap"),
         ui.p(ui.output_text_verbatim("show_feed")),
 
 
@@ -140,6 +140,20 @@ def server(input, output, session):
         return f'You have selected the "{model_choices[input.x()]}" with \n' + f'test AUC-ROC Score: {round(metrics_1,3)} \n' + \
         f'test PR Score: {round(metrics_2,3)} \n' + f'test F1 Score: {round(metrics_3,3)} \n' + f'Recall: {round(metrics_4,3)} \n' + f'Precision: {round(metrics_5,3)} \n'
 
+    
+    @output
+    @render.text
+    @reactive.event(input.run_tshap)
+    async def shaprun_text():
+        with ui.Progress(min=1, max=100) as p: ### nice progress bar
+            p.set(message="Calculation in progress", detail="This may take a while...")
+            for i in range(1, 100):
+                p.set(i, message="Computing")
+                await sleep(0.01)
+
+        shap_run_msg = "SHAP Run Succesful!"
+
+        return shap_run_msg
 
     @output
     @render.text
