@@ -31,6 +31,8 @@ test_x = test_scaler.fit_transform(test_x)
 
 model_choices = {"a": "GRU Model", "b": "LSTM Model"}
 
+interpret_mode = {"glb" : "Global (all features together)", "loc" : "Local (one feature at a time)"}
+
 feature_choices = {"feat1":'Blood Pressure', "feat2":'Oxygen', "feat3":'Breathing rate', "feat4":'feature name 4',}
 
 shap_choices = {"shmeth1":'Stationary Time Window Method', "shmeth2":'Sliding Time Window Method', "shmeth3":'Binary Time Window Method',}
@@ -41,34 +43,33 @@ shap_choices = {"shmeth1":'Stationary Time Window Method', "shmeth2":'Sliding Ti
 app_ui = ui.page_fluid(
     #ui.h1("MLExplain EHR"),
     ui.tags.title("Page title is this"),
-    ui.img(src="top_banner.png"),
+    ui.img(src="top_banner1.png", class_="sticky-md-top img-fluid"),
 
     ui.layout_sidebar(
 
         ui.panel_sidebar(
-            #ui.input_slider("n", "N", 0, 100, 20),
-            #ui.input_file("file1", "Upload your dataset for analysis:", multiple=True),
-            ui.panel_title("Please provide the inputs"),
+            ui.p(ui.p(ui.panel_title("Please provide the inputs")),
             ui.p(ui.input_radio_buttons("x", "Select model to analyze", model_choices)),
-            ui.input_action_button("run", "Show model evaluation metrics", class_="btn-success btn-lg"),
-            #ui.input_action_button("run", "Run analysis", class_="btn-primary w-80"),
-            #ui.p ( ui.output_text_verbatim("res_text_model", placeholder=True)),
+            ui.input_action_button("run", "Show model evaluation metrics", class_="btn-success btn-lg")),
             
-            #ui.input_radio_buttons("feats", "Select feature to analyze", feature_choices),
-            
-            ui.p(ui.input_select("shaps", "Select SHAP method", shap_choices)),
+            ui.p(ui.input_radio_buttons("shaps", "Select SHAP method", shap_choices)),
             ui.input_action_button("run_tshap", "Run Temporal SHAP", class_="btn-success btn-lg"),
 
-            ui.p(ui.input_select("feats", "Select feature to analyze", feature_choices)),
+            ui.p(ui.input_radio_buttons("feats", "Select interpretation mode", interpret_mode)),
+
             ui.input_action_button("show_tshap", "Show Temporal Shap Results", class_="btn-success btn-lg"),
 
-            ui.p(ui.input_text("feedback", "Please provide feedback in the box below")),
+
+            ui.p(ui.input_text("feedback", "Please provide feedback in the box below and rate the web UI")),
+            #i.p(ui.input_slider("user_rating", "Rating", value=5, min=1, max=5, step=1)),
             #ui.p(ui.input_radio_buttons("feedback", "Choose your feedback type", feedback_choices)),
-            ui.input_action_button("sub_feed", "Submit feedback", class_="btn-success btn-lg"),
+            ui.p(ui.input_slider("user_rating", "Rating", value=5, min=1, max=5, step=0.5)),
+            ui.p(ui.input_text("user_name", "Your name: ")),
+            ui.input_action_button("sub_feed", "Submit the rating and feedback", class_="btn-success btn-lg"),
             
 
-        ),
-        ui.panel_main(
+        width=4),
+        ui.panel_sidebar(
         ui.panel_title("Outputs"),
         ui.p(ui.output_text_verbatim("res_text")),
         ui.output_plot("plot_model"),
@@ -77,9 +78,11 @@ app_ui = ui.page_fluid(
         ui.p(ui.output_text_verbatim("show_feed")),
 
 
-      ),
+      width=8),
 
-    )
+
+
+    ),ui.p("hehehehe"),
 )
 
 ## Part 2: server ----
@@ -200,7 +203,7 @@ def server(input, output, session):
 
     @output
     @render.plot()
-    @reactive.event(input.run_tshap)
+    @reactive.event(input.show_tshap)
     def plot_shap() -> object:
         temp_plot = np.random.normal(25, 2, 30)
 
