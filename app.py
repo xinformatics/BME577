@@ -29,21 +29,23 @@ test_x = test_scaler.fit_transform(test_x)
 
 ## Part 0: define variables
 
-model_choices = {"a": "GRU Model", "b": "LSTM Model"}
+model_choices = {"gru": "GRU  (Gated Recurrent Unit) Model", "lstm": "LSTM (Long-Short Term Memory) Model"}
+
+shap_choices = {"shmeth1":'Stationary Time Window Method', "shmeth2":'Sliding Time Window Method', "shmeth3":'Binary Time Window Method'}
 
 interpret_mode = {"glb" : "Global (all features together)", "loc" : "Local (one feature at a time)"}
 
 feature_choices = {"feat1":'Blood Pressure', "feat2":'Oxygen', "feat3":'Breathing rate', "feat4":'feature name 4',}
 
-shap_choices = {"shmeth1":'Stationary Time Window Method', "shmeth2":'Sliding Time Window Method', "shmeth3":'Binary Time Window Method',}
+
 
 ##feedback_choices = {"feed1":  "Shit app", "feed2": "super shit app"} not used
 
 ## Part 1: ui ----
 app_ui = ui.page_fluid(
     #ui.h1("MLExplain EHR"),
-    ui.tags.title("Page title is this"),
-    ui.img(src="top_banner1.png", class_="sticky-md-top img-fluid"),
+    #ui.tags.title("Page title is this"),
+    ui.img(src="top_banner4.png", class_="sticky-md-top img-fluid"),
 
     ui.layout_sidebar(
 
@@ -52,7 +54,7 @@ app_ui = ui.page_fluid(
             ui.p(ui.input_radio_buttons("x", "Select model to analyze", model_choices)),
             ui.input_action_button("run", "Show model evaluation metrics", class_="btn-success btn-lg")),
             
-            ui.p(ui.input_radio_buttons("shaps", "Select SHAP method", shap_choices)),
+            ui.p(ui.input_radio_buttons("shaps", "Select SHAP Method", shap_choices)),
             ui.input_action_button("run_tshap", "Run Temporal SHAP", class_="btn-success btn-lg"),
 
             ui.p(ui.input_radio_buttons("feats", "Select interpretation mode", interpret_mode)),
@@ -60,12 +62,15 @@ app_ui = ui.page_fluid(
             ui.input_action_button("show_tshap", "Show Temporal Shap Results", class_="btn-success btn-lg"),
 
 
-            ui.p(ui.input_text("feedback", "Please provide feedback in the box below and rate the web UI")),
+            ui.p(ui.input_text("feedback", "Please provide feedback in the box below and rate this web UI")),
             #i.p(ui.input_slider("user_rating", "Rating", value=5, min=1, max=5, step=1)),
             #ui.p(ui.input_radio_buttons("feedback", "Choose your feedback type", feedback_choices)),
             ui.p(ui.input_slider("user_rating", "Rating", value=5, min=1, max=5, step=0.5)),
             ui.p(ui.input_text("user_name", "Your name: ")),
             ui.input_action_button("sub_feed", "Submit the rating and feedback", class_="btn-success btn-lg"),
+
+            #ui.p(ui.panel_main(ui.p("Developed for the BME577 course project by Shashank Yadav and Khuong Duy Mac"))),
+            ui.p(ui.panel_main(ui.p(ui.HTML("<marquee> Developed for the BME577 course project by Shashank Yadav and Khuong Duy Mac. </marquee>")))),
             
 
         width=4),
@@ -75,14 +80,16 @@ app_ui = ui.page_fluid(
         ui.output_plot("plot_model"),
         ui.p(ui.output_text_verbatim("shaprun_text")),
         ui.output_plot("plot_shap"),
-        ui.p(ui.output_text_verbatim("show_feed")),
+        ui.p(ui.output_text_verbatim("show_feed"),
+        #ui.HTML("<marquee> Developed for the BME577 course project by Shashank Yadav and Khuong Duy Mac </marquee>")
+        ),
 
 
       width=8),
 
 
 
-    ),ui.p("hehehehe"),
+    ),
 )
 
 ## Part 2: server ----
@@ -111,7 +118,7 @@ def server(input, output, session):
         #input.run()
 
         #with reactive.isolate():
-        if input.x() == 'a':
+        if input.x() == 'gru':
             model = keras.models.load_model('temporal_GRU_100epochs.hdf5')
         else:
             model = keras.models.load_model('temporal_LSTM_37epochs_ES.hdf5')
@@ -154,7 +161,7 @@ def server(input, output, session):
                 p.set(i, message="Computing")
                 await sleep(0.01)
 
-        shap_run_msg = "SHAP Run Succesful!"
+        shap_run_msg = f'You have provided the {shap_choices[input.shaps()]}' + " SHAP Method. Run Succesful!"
 
         return shap_run_msg
 
