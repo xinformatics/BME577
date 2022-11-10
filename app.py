@@ -35,7 +35,37 @@ shap_choices = {"shmeth1":'Stationary Time Window Method', "shmeth2":'Sliding Ti
 
 interpret_mode = {"glb" : "Global (all features together)", "loc" : "Local (one feature at a time)"}
 
-feature_choices = {"feat1":'Blood Pressure', "feat2":'Oxygen', "feat3":'Breathing rate', "feat4":'feature name 4',}
+
+feature_map_mimic ={"anion_gap":   "ANION GAP", 
+                    "albumin" :    "ALBUMIN", 
+                    "bicarbonate": "BICARBONATE", 
+                    "bilirubin":   "BILIRUBIN", 
+                    "creatinine":  "CREATININE", 
+                    "chloride" :   "CHLORIDE", 
+                    "glucose" :    "GLUCOSE", 
+                    "hematocrit":  "HEMATOCRIT", 
+                    "hemoglobin" : "HEMOGLOBIN", 
+                    "lactate":     "LACTATE", 
+                    "magnesium":   "MAGNESIUM", 
+                    "phosphate":   "PHOSPHATE", 
+                    "platelet" :   "PLATELET", 
+                    "potassium":   "POTASSIUM",
+                    "ptt":         "PTT",
+                    "inr":         "INR", 
+                    "pt":          "PT", 
+                    "sodium" :     "SODIUM", 
+                    "bun" :        "BUN", 
+                    "wbc" :        "WBC", 
+                    "heartrate" :  "HeartRate", 
+                    "sysbp"     :  "SysBP", 
+                    "diasbp" :     "DiasBP", 
+                    "meanbp":      "MeanBP", 
+                    "resprate" :   "RespRate", 
+                    "spo2":        "SpO2",
+                    "glucose1":"Glucose"}
+
+
+#feature_choices = {"feat1":'Blood Pressure', "feat2":'Oxygen', "feat3":'Breathing rate', "feat4":'feature name 4',}
 
 
 
@@ -46,6 +76,7 @@ app_ui = ui.page_fluid(
     #ui.h1("MLExplain EHR"),
     #ui.tags.title("Page title is this"),
     ui.img(src="top_banner4.png", class_="sticky-md-top img-fluid"),
+    #ui.p(ui.panel_main(ui.p(ui.HTML("<marquee> Developed for the BME577 course project by Shashank Yadav and Khuong Duy Mac. </marquee>"))), class_="sticky-md-top"),
 
     ui.layout_sidebar(
 
@@ -58,6 +89,11 @@ app_ui = ui.page_fluid(
             ui.input_action_button("run_tshap", "Run Temporal SHAP", class_="btn-success btn-lg"),
 
             ui.p(ui.input_radio_buttons("feats", "Select interpretation mode", interpret_mode)),
+
+            ui.panel_conditional("input.feats === 'loc'",
+                #ui.input_radio_buttons("feedback", "Select the feature", feature_map_mimic),
+                ui.input_select("feedback", "Select the feature", feature_map_mimic),
+            ),
 
             ui.input_action_button("show_tshap", "Show Temporal Shap Results", class_="btn-success btn-lg"),
 
@@ -81,7 +117,8 @@ app_ui = ui.page_fluid(
         ui.p(ui.output_text_verbatim("shaprun_text")),
         ui.output_plot("plot_shap"),
         ui.p(ui.output_text_verbatim("show_feed"),
-        #ui.HTML("<marquee> Developed for the BME577 course project by Shashank Yadav and Khuong Duy Mac </marquee>")
+        #ui.HTML("<marquee> Developed for the BME577 course project by Shashank Yadav and Khuong Duy Mac </marquee>"),
+        #ui.p(ui.panel_main(ui.p(ui.HTML("<marquee> Developed for the BME577 course project by Shashank Yadav and Khuong Duy Mac. </marquee>")))),
         ),
 
 
