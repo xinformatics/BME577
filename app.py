@@ -91,8 +91,8 @@ app_ui = ui.page_fluid(
             ui.p(ui.input_radio_buttons("feats", "Select interpretation mode", interpret_mode)),
 
             ui.panel_conditional("input.feats === 'loc'",
-                #ui.input_radio_buttons("feedback", "Select the feature", feature_map_mimic),
-                ui.input_select("feedback", "Select the feature", feature_map_mimic),
+                #ui.input_radio_buttons("feat_select", "Select the feature", feature_map_mimic),
+                ui.input_select("feat_select", "Select the feature", feature_map_mimic),
             ),
 
             ui.input_action_button("show_tshap", "Show Temporal Shap Results", class_="btn-success btn-lg"),
