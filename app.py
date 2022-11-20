@@ -48,35 +48,23 @@ shap_choices = {"shmeth1":'Stationary Time Window Method', "shmeth2":'Sliding Ti
 
 interpret_mode = {"glb" : "All features together", "loc" : "One feature at a time"}
 
+feature_map_mimic_list = ['ANION GAP', 'ALBUMIN', 'BICARBONATE', 'BILIRUBIN', 'CREATININE', 'CHLORIDE', 'GLUCOSE',
+                     'HEMATOCRIT', 'HEMOGLOBIN', 'LACTATE', 'MAGNESIUM', 'PHOSPHATE', 'PLATELET', 'POTASSIUM', 'PTT',
+                     'INR', 'PT', 'SODIUM', 'BUN', 'WBC', 'HeartRate', 'SysBP', 'DiasBP', 'MeanBP', 'RespRate', 'SpO2',
+                     'Glucose', 'Temp', 'gender','age','ethnicity','first_icu_stay'] ## 32 
 
-feature_map_mimic ={"anion_gap":   "ANION GAP", 
-                    "albumin" :    "ALBUMIN", 
-                    "bicarbonate": "BICARBONATE", 
-                    "bilirubin":   "BILIRUBIN", 
-                    "creatinine":  "CREATININE", 
-                    "chloride" :   "CHLORIDE", 
-                    "glucose" :    "GLUCOSE", 
-                    "hematocrit":  "HEMATOCRIT", 
-                    "hemoglobin" : "HEMOGLOBIN", 
-                    "lactate":     "LACTATE", 
-                    "magnesium":   "MAGNESIUM", 
-                    "phosphate":   "PHOSPHATE", 
-                    "platelet" :   "PLATELET", 
-                    "potassium":   "POTASSIUM",
-                    "ptt":         "PTT",
-                    "inr":         "INR", 
-                    "pt":          "PT", 
-                    "sodium" :     "SODIUM", 
-                    "bun" :        "BUN", 
-                    "wbc" :        "WBC", 
-                    "heartrate" :  "HeartRate", 
-                    "sysbp"     :  "SysBP", 
-                    "diasbp" :     "DiasBP", 
-                    "meanbp":      "MeanBP", 
-                    "resprate" :   "RespRate", 
-                    "spo2":        "SpO2",
-                    "glucose1":"Glucose"}
+feature_map_mimic ={"anion_gap":   "ANION GAP",  "albumin" :    "ALBUMIN", "bicarbonate": "BICARBONATE", "bilirubin":   "BILIRUBIN", 
+                    "creatinine":  "CREATININE", "chloride" :   "CHLORIDE","glucose" :    "GLUCOSE", "hematocrit":  "HEMATOCRIT", 
+                    "hemoglobin" : "HEMOGLOBIN", "lactate":     "LACTATE", "magnesium":   "MAGNESIUM", "phosphate":   "PHOSPHATE", 
+                    "platelet" :   "PLATELET", "potassium":   "POTASSIUM","ptt": "PTT", "inr":  "INR", 
+                    "pt":          "PT", "sodium" :     "SODIUM", "bun" :        "BUN", "wbc" :        "WBC", 
+                    "heartrate" :  "HeartRate", "sysbp"     :  "SysBP", "diasbp" :     "DiasBP", "meanbp":      "MeanBP", 
+                    "resprate" :   "RespRate", "spo2":        "SpO2", "glucose1":"Glucose"}
 
+
+num_feature_map_mimic ={"anion_gap": 1,"albumin" :2,"bicarbonate": 3, "bilirubin":   4, "creatinine":  5, "chloride" :   6, "glucose" :    7, "hematocrit":  8, 
+"hemoglobin" : 9, "lactate":     10, "magnesium":   11, "phosphate":   12, "platelet" :   13, "potassium":  14,"ptt": 15,"inr": 16, "pt": 17, 
+"sodium" :     18, "bun" :  19, "wbc" : 20, "heartrate" :  21, "sysbp" :  22, "diasbp" :     23, "meanbp":      24, "resprate" :   25, "spo2": 26}#"glucose1": 27}
 
 #feature_choices = {"feat1":'Blood Pressure', "feat2":'Oxygen', "feat3":'Breathing rate', "feat4":'feature name 4',}
 
@@ -96,7 +84,7 @@ app_ui = ui.page_fluid(
         ui.panel_sidebar(
             ui.p(ui.p(ui.panel_title("Please provide the inputs")),
             ui.p(ui.input_radio_buttons("x", "Select model to analyze", model_choices)),
-            ui.input_action_button("run", "Show model evaluation metrics", class_="btn-success btn-lg")),
+            ui.input_action_button("run", "Load model and display model evaluation metrics", class_="btn-success btn-lg")),
             
             ui.p(ui.input_radio_buttons("shaps", "Select SHAP Method", shap_choices)),
             ui.input_action_button("run_tshap", "Run Temporal SHAP", class_="btn-success btn-lg"),
@@ -206,7 +194,9 @@ def server(input, output, session):
     @reactive.event(input.run_tshap)
     async def shaprun_text():
 
-        num_background = 5
+        global num_background, index, background_ts, test_ts
+
+        num_background = 2
         index = 0
         background_ts, test_ts = train_x[:num_background], test_x[index:index + 5]
 
@@ -219,42 +209,47 @@ def server(input, output, session):
             global ts_phi_
             ts_phi_ = np.zeros((len(test_ts),test_ts.shape[1], test_ts.shape[2]))
 
-            if input.shaps() == "shmeth1":
-                ### stationary time window shap
-                #ts_phi_1 = np.zeros((len(test_ts),test_ts.shape[1], test_ts.shape[2]))
-                print('Sta_TW')
-                for i in range(len(test_ts)):
-                    window_len = 15
-                    gtw = StationaryTimeWindow(model, window_len, B_ts=background_ts, test_ts=test_ts[i:i+1], model_type='lstm')
-                    p.set(i, message="Computing")
-                    #ts_phi_1[i,:,:] = gtw.shap_values()[0]
-                    ts_phi_[i,:,:] = gtw.shap_values()[0]
+            try:
 
-            elif input.shaps() == "shmeth2":
-                ### sliding time window shap
-                #ts_phi_2 = np.zeros((len(test_ts),test_ts.shape[1], test_ts.shape[2]))
-                print('Sli_TW')
-                for i in range(len(test_ts)):
-                    window_len = 20
-                    stride = 10
-                    stw = SlidingTimeWindow(model, stride, window_len, background_ts, test_ts[i:i+1], model_type='lstm')
-                    p.set(i, message="Computing")
-                    #ts_phi_2[i,:,:] = stw.shap_values()[0]
-                    ts_phi_[i,:,:] = stw.shap_values()[0]
-                    
-            elif input.shaps() == "shmeth3":
-                ### binary time window
-                #ts_phi_3 = np.zeros((len(test_ts),test_ts.shape[1], test_ts.shape[2]))
-                print('B_TW')
-                for i in range(len(test_ts)):
-                    delta = 0.01
-                    n_w = 20
-                    btw = BinaryTimeWindow(model, delta, n_w, background_ts, test_ts[i:i+1], model_type='lstm')
-                    p.set(i, message="Computing")
-                    #ts_phi_3[i,:,:] = btw.shap_values(nsamples_in_loop='auto')[0]
-                    ts_phi_[i,:,:] = btw.shap_values(nsamples_in_loop='auto')[0]
+                if input.shaps() == "shmeth1":
+                    ### stationary time window shap
+                    #ts_phi_1 = np.zeros((len(test_ts),test_ts.shape[1], test_ts.shape[2]))
+                    print('Sta_TW')
+                    for i in range(len(test_ts)):
+                        window_len = 15
+                        gtw = StationaryTimeWindow(model, window_len, B_ts=background_ts, test_ts=test_ts[i:i+1], model_type='lstm')
+                        p.set(i, message="Computing")
+                        #ts_phi_1[i,:,:] = gtw.shap_values()[0]
+                        ts_phi_[i,:,:] = gtw.shap_values()[0]
 
-        shap_run_msg = f'You have provided the {shap_choices[input.shaps()]}' + " SHAP Method. Run Succesful!"
+                elif input.shaps() == "shmeth2":
+                    ### sliding time window shap
+                    #ts_phi_2 = np.zeros((len(test_ts),test_ts.shape[1], test_ts.shape[2]))
+                    print('Sli_TW')
+                    for i in range(len(test_ts)):
+                        window_len = 20
+                        stride = 10
+                        stw = SlidingTimeWindow(model, stride, window_len, background_ts, test_ts[i:i+1], model_type='lstm')
+                        p.set(i, message="Computing")
+                        #ts_phi_2[i,:,:] = stw.shap_values()[0]
+                        ts_phi_[i,:,:] = stw.shap_values()[0]
+                        
+                elif input.shaps() == "shmeth3":
+                    ### binary time window
+                    #ts_phi_3 = np.zeros((len(test_ts),test_ts.shape[1], test_ts.shape[2]))
+                    print('B_TW')
+                    for i in range(len(test_ts)):
+                        delta = 0.01
+                        n_w = 20
+                        btw = BinaryTimeWindow(model, delta, n_w, background_ts, test_ts[i:i+1], model_type='lstm')
+                        p.set(i, message="Computing")
+                        #ts_phi_3[i,:,:] = btw.shap_values(nsamples_in_loop='auto')[0]
+                        ts_phi_[i,:,:] = btw.shap_values(nsamples_in_loop='auto')[0]
+
+                shap_run_msg = f'You have provided the {shap_choices[input.shaps()]}' + " SHAP Method. Run Succesful!"
+
+            except:
+                shap_run_msg = "Please run the first step with model evaluation"
 
         return shap_run_msg
 
@@ -305,14 +300,56 @@ def server(input, output, session):
     @render.plot()
     @reactive.event(input.show_tshap)
     def plot_shap() -> object:
-        #temp_plot = np.random.normal(25, 2, 30)
-        #fig, ax = plt.subplots()
-        #ax.hist(temp_plot, 60, density=True)
-        #return fig
+        print(input.feats())
+
+        #%matplotlib inline
+        phi_index = 0
+
+        # try:
+        #     if input.feats() == "glb":
+        #         fig = heat_map_all_features(0, 48, ts_phi_[phi_index, :, :], num_feature=40, var_name=feature_map_mimic_list, plot_type='heat_abs')
+        #     else:
+
+        #         fname = input.feat_select()
+        #         print(fname)
+
+        #         #temp_plot = np.random.normal(25, 2, 30)
+        #         #fig, ax = plt.subplots()
+        #         #ax.hist(temp_plot, 60, density=True)
+        #         #title = 'blah   N = 241, ' + 'standard deviation =' + str(sigma)
+        #         #ax.set_title("This plot is for the " + fname)
+
+        #         var = feature_map_mimic[fname]
+        #         # # var_ind = var_to_ind[var]
+        #         var_ind = num_feature_map_mimic[fname] - 1
+        #         label = 'Unfavorable' if model.predict(test_x[index][np.newaxis,:])>0.5 else 'Favorable'
+        #         org_ts = test_scaler.inverse_transfrom(test_ts[phi_index:phi_index + 1])
+        #         fig = heat_map(0, 48, org_ts[0, :, var_ind], ts_phi_[phi_index, :, var_ind], var_name=var, plot_type='bar')
+        # except:
+        #     shap_run_msg = "Please run the first two steps"
 
 
+        if input.feats() == "glb":
+            fig = heat_map_all_features(0, 48, ts_phi_[phi_index, :, :], num_feature=40, var_name=feature_map_mimic_list, plot_type='heat_abs')
+        else:
 
-        return 
+            fname = input.feat_select()
+            print(fname)
+
+            #temp_plot = np.random.normal(25, 2, 30)
+            #fig, ax = plt.subplots()
+            #ax.hist(temp_plot, 60, density=True)
+            #title = 'blah   N = 241, ' + 'standard deviation =' + str(sigma)
+            #ax.set_title("This plot is for the " + fname)
+
+            var = feature_map_mimic[fname]
+            # # var_ind = var_to_ind[var]
+            var_ind = num_feature_map_mimic[fname] - 1
+            label = 'Unfavorable' if model.predict(test_x[index][np.newaxis,:])>0.5 else 'Favorable'
+            org_ts = test_scaler.inverse_transfrom(test_ts[phi_index:phi_index + 1])
+            fig = heat_map(0, 48, org_ts[0, :, var_ind], ts_phi_[phi_index, :, var_ind], var_name=var, plot_type='bar')
+
+        return fig
 
 
     # @output
