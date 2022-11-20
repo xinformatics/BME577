@@ -1,4 +1,3 @@
-
 from shiny import App,  reactive, render, ui
 from tensorflow.keras import backend as K
 from sklearn.metrics import *
@@ -12,6 +11,8 @@ from sklearn.model_selection import train_test_split
 from util import TimeSeriesScaler
 import matplotlib.pyplot as plt
 from sklearn import metrics
+
+from heatmap import heat_map, heat_map_all_features 
 
 
 value = np.load('mimic_processed_2k_48t_26f.npy')
@@ -33,7 +34,7 @@ model_choices = {"gru": "GRU  (Gated Recurrent Unit) Model", "lstm": "LSTM (Long
 
 shap_choices = {"shmeth1":'Stationary Time Window Method', "shmeth2":'Sliding Time Window Method', "shmeth3":'Binary Time Window Method'}
 
-interpret_mode = {"glb" : "Global (all features together)", "loc" : "Local (one feature at a time)"}
+interpret_mode = {"glb" : "All features together", "loc" : "One feature at a time"}
 
 
 feature_map_mimic ={"anion_gap":   "ANION GAP", 
