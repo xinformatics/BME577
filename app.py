@@ -15,6 +15,18 @@ from sklearn import metrics
 from heatmap import heat_map, heat_map_all_features 
 
 
+########### addtional path addition for SHAP util
+import sys
+sys.path.insert(1, '/home/shashank/Desktop/arizona_sem01/BME577/temporal-shap-bme-577-master/track_project')
+
+from shap_util import *
+import matplotlib as mpl
+import shap
+
+shap.initjs()
+#################### path added
+
+
 value = np.load('mimic_processed_2k_48t_26f.npy')
 output = np.load('output.npy')
 
@@ -154,7 +166,7 @@ def server(input, output, session):
     @reactive.event(input.run)
     async def res_text():
         #input.run()
-
+        global model
         #with reactive.isolate():
         if input.x() == 'gru':
             model = keras.models.load_model('temporal_GRU_100epochs.hdf5')
@@ -193,11 +205,54 @@ def server(input, output, session):
     @render.text
     @reactive.event(input.run_tshap)
     async def shaprun_text():
-        with ui.Progress(min=1, max=100) as p: ### nice progress bar
+
+        num_background = 5
+        index = 0
+        background_ts, test_ts = train_x[:num_background], test_x[index:index + 5]
+
+        with ui.Progress(min=1, max=len(test_ts)) as p: ### nice progress bar
             p.set(message="Calculation in progress", detail="This may take a while...")
-            for i in range(1, 100):
-                p.set(i, message="Computing")
-                await sleep(0.01)
+            #for i in range(1, 100):
+                #p.set(i, message="Computing")
+                #await sleep(0.01)
+
+            global ts_phi_
+            ts_phi_ = np.zeros((len(test_ts),test_ts.shape[1], test_ts.shape[2]))
+
+            if input.shaps() == "shmeth1":
+                ### stationary time window shap
+                #ts_phi_1 = np.zeros((len(test_ts),test_ts.shape[1], test_ts.shape[2]))
+                print('Sta_TW')
+                for i in range(len(test_ts)):
+                    window_len = 15
+                    gtw = StationaryTimeWindow(model, window_len, B_ts=background_ts, test_ts=test_ts[i:i+1], model_type='lstm')
+                    p.set(i, message="Computing")
+                    #ts_phi_1[i,:,:] = gtw.shap_values()[0]
+                    ts_phi_[i,:,:] = gtw.shap_values()[0]
+
+            elif input.shaps() == "shmeth2":
+                ### sliding time window shap
+                #ts_phi_2 = np.zeros((len(test_ts),test_ts.shape[1], test_ts.shape[2]))
+                print('Sli_TW')
+                for i in range(len(test_ts)):
+                    window_len = 20
+                    stride = 10
+                    stw = SlidingTimeWindow(model, stride, window_len, background_ts, test_ts[i:i+1], model_type='lstm')
+                    p.set(i, message="Computing")
+                    #ts_phi_2[i,:,:] = stw.shap_values()[0]
+                    ts_phi_[i,:,:] = stw.shap_values()[0]
+                    
+            elif input.shaps() == "shmeth3":
+                ### binary time window
+                #ts_phi_3 = np.zeros((len(test_ts),test_ts.shape[1], test_ts.shape[2]))
+                print('B_TW')
+                for i in range(len(test_ts)):
+                    delta = 0.01
+                    n_w = 20
+                    btw = BinaryTimeWindow(model, delta, n_w, background_ts, test_ts[i:i+1], model_type='lstm')
+                    p.set(i, message="Computing")
+                    #ts_phi_3[i,:,:] = btw.shap_values(nsamples_in_loop='auto')[0]
+                    ts_phi_[i,:,:] = btw.shap_values(nsamples_in_loop='auto')[0]
 
         shap_run_msg = f'You have provided the {shap_choices[input.shaps()]}' + " SHAP Method. Run Succesful!"
 
@@ -250,11 +305,14 @@ def server(input, output, session):
     @render.plot()
     @reactive.event(input.show_tshap)
     def plot_shap() -> object:
-        temp_plot = np.random.normal(25, 2, 30)
+        #temp_plot = np.random.normal(25, 2, 30)
+        #fig, ax = plt.subplots()
+        #ax.hist(temp_plot, 60, density=True)
+        #return fig
 
-        fig, ax = plt.subplots()
-        ax.hist(temp_plot, 60, density=True)
-        return fig
+
+
+        return 
 
 
     # @output
