@@ -16,17 +16,28 @@ from heatmap import heat_map, heat_map_all_features
 
 
 ########### addtional path addition for SHAP util
-import sys
-sys.path.insert(1, '/home/shashank/Desktop/arizona_sem01/BME577/temporal-shap-bme-577-master/track_project')
+#import sys
+#sys.path.insert(1, '/home/shashank/Desktop/arizona_sem01/BME577/temporal-shap-bme-577-master/track_project')
 
 from shap_util import *
 import matplotlib as mpl
 import shap
 
+
 shap.initjs()
 #################### path added
 
 
+
+#### workaround for feedback display
+pkl_file = open("feed.pkl", "rb")
+df_feed = dill.load(pkl_file)
+pkl_file.close()
+
+
+
+
+### data added
 value = np.load('mimic_processed_2k_48t_26f.npy')
 output = np.load('output.npy')
 
@@ -196,7 +207,7 @@ def server(input, output, session):
 
         global num_background, index, background_ts, test_ts
 
-        num_background = 2
+        num_background = 5
         index = 0
         background_ts, test_ts = train_x[:num_background], test_x[index:index + 5]
 
@@ -259,7 +270,14 @@ def server(input, output, session):
     @reactive.event(input.sub_feed)
     def show_feed() -> object:
         feed_msg = input.feedback()
-        return f'You have provided the following feedback{feed_msg}'
+        uname = input.user_name()
+        star = input.user_rating()
+
+        df_feed.loc[len(df_feed.index)] = [uname, feed_msg, star]
+        df_feed.to_pickle("./feed.pkl")
+
+        return f'Hi {uname}, You have provided the following feedback : {feed_msg} + {star}'
+        #return f'You have provided the following feedback{feed_msg}'
 
 
 
@@ -326,7 +344,10 @@ def server(input, output, session):
         #         org_ts = test_scaler.inverse_transfrom(test_ts[phi_index:phi_index + 1])
         #         fig = heat_map(0, 48, org_ts[0, :, var_ind], ts_phi_[phi_index, :, var_ind], var_name=var, plot_type='bar')
         # except:
+            
         #     shap_run_msg = "Please run the first two steps"
+
+        #     return shap_run_msg
 
 
         if input.feats() == "glb":
